@@ -40,20 +40,10 @@ class FootballScraper:
                 show_more_button.click()
 
                 wait.until(
-
-                    # EC.all_of(
-                    #     EC.visibility_of_all_elements_located((By.CLASS_NAME, 'event__time')),
-                    #     EC.visibility_of_all_elements_located(
-                    #         (By.CLASS_NAME, 'event__homeParticipant')
-                    #     )
-                    # )
-
                     EC.visibility_of_all_elements_located((By.CLASS_NAME, 'event__time'))
-
                 )
 
             except TimeoutException:
-                # print('no more button to clicked')
                 break
 
         return driver
@@ -65,7 +55,6 @@ class FootballScraper:
         match_schedules = [schedule.text for schedule in match_schedules_elements]
         league_name = driver.find_element(By.CLASS_NAME, 'heading__name').text
         season = driver.find_element(By.CLASS_NAME, 'heading__info').text
-        # print(f'match schedule: {len(match_schedules)}')
         return match_schedules, league_name, season
 
     def __fetch_home_away_clubs(self, driver: WebDriver) -> tuple[list[str], list[str]]:
@@ -86,8 +75,6 @@ class FootballScraper:
             home_participants.append(img_tag_home.get_attribute('alt'))
             away_participants.append(img_tag_away.get_attribute('alt'))
 
-        # print(f'Home Participants : {len(home_participants)}')
-        # print(f'Away Participants : {len(away_participants)}')
         return home_participants, away_participants
 
     def __fetch_match_scores(self, driver: WebDriver) -> tuple[list[int], list[int]]:
@@ -96,9 +83,6 @@ class FootballScraper:
 
         home_scores = [score.text for score in home_scores_elements]
         away_scores = [score.text for score in away_scores_elements]
-
-        # print(f'Home Scores: {len(home_scores)}')
-        # print(f'Away Scores: {len(away_scores)}')
 
         return home_scores, away_scores
 
