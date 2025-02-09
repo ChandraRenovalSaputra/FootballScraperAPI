@@ -49,55 +49,129 @@ class FootballScraper:
         return driver
 
 
-    def __fetch_match_schedules(self: 'FootballScraper', driver: WebDriver) -> list[str]:
+    def __get_match_schedules(self: 'FootballScraper', driver: WebDriver) -> list[str]:
         '''get match schedules'''
-        match_schedules_elements = driver.find_elements(By.CLASS_NAME, 'event__time')
-        match_schedules = [schedule.text for schedule in match_schedules_elements]
-        league_name = driver.find_element(By.CLASS_NAME, 'heading__name').text
-        season = driver.find_element(By.CLASS_NAME, 'heading__info').text
-        return match_schedules, league_name, season
+        match_schedules = []
 
-    def __fetch_home_away_clubs(self, driver: WebDriver) -> tuple[list[str], list[str]]:
+        try:
+            match_schedules_elements = driver.find_elements(By.CLASS_NAME, 'event__time')
+        except NoSuchElementException:
+            return match_schedules
+
+        for element in match_schedules_elements:
+            try:
+
+                postponed = element.find_element(By.CLASS_NAME, 'lineThrough')
+                match_schedules.append(postponed.text)
+
+            except NoSuchElementException:
+                match_schedules.append(element.text)
+
+        return match_schedules
+
+    def __is_postponed(self, driver: WebDriver) -> list[bool]:
+        postponed_statuses = []
+
+        try:
+            match_schedules_elements = driver.find_elements(By.CLASS_NAME, 'event__time')
+        except NoSuchElementException:
+            return postponed_statuses
+
+        for element in match_schedules_elements:
+
+            try:
+
+                element.find_element(By.CLASS_NAME, 'lineThrough')
+                postponed_statuses.append(True)
+
+            except NoSuchElementException:
+                postponed_statuses.append(False)
+
+        return postponed_statuses
+
+    def __get_home_clubs(self, driver: WebDriver) -> list[str]:
         '''
         fetch match results
         '''
         home_participants = []
+
+        try:
+            div_home_participants = driver.find_elements(By.CLASS_NAME, 'event__homeParticipant')
+
+            for home_participant in div_home_participants:
+
+                img_tag_home = home_participant.find_element(By.TAG_NAME, 'img')
+
+                home_participants.append(img_tag_home.get_attribute('alt'))
+        except NoSuchElementException:
+            pass
+
+        return home_participants
+
+    def __get_away_clubs(self, driver: WebDriver) -> list[str]:
         away_participants = []
+        try:
+            div_away_participants = driver.find_elements(By.CLASS_NAME, 'event__awayParticipant')
 
-        div_home_participants = driver.find_elements(By.CLASS_NAME, 'event__homeParticipant')
-        div_away_participants = driver.find_elements(By.CLASS_NAME, 'event__awayParticipant')
+            for away_participant in div_away_participants:
+                img_tag_away = away_participant.find_element(By.TAG_NAME, 'img')
+                away_participants.append(img_tag_away.get_attribute('alt'))
+        except NoSuchElementException:
+            pass
 
-        for home_participant, away_participant in zip(div_home_participants, div_away_participants):
+        return away_participants
 
-            img_tag_home = home_participant.find_element(By.TAG_NAME, 'img')
-            img_tag_away = away_participant.find_element(By.TAG_NAME, 'img')
 
-            home_participants.append(img_tag_home.get_attribute('alt'))
-            away_participants.append(img_tag_away.get_attribute('alt'))
+    def __get_home_scores(self, driver: WebDriver) -> list[int]:
+        try:
+            home_scores_elements = driver.find_elements(By.CLASS_NAME, 'event__score--home')
+            home_scores = [score.text for score in home_scores_elements]
+            return home_scores
+        except NoSuchElementException:
+            return []
 
-        return home_participants, away_participants
+    def __get_away_scores(self, driver: WebDriver) -> list[str]:
+        try:
+            away_scores_elements = driver.find_elements(By.CLASS_NAME, 'event__score--away')
 
-    def __fetch_match_scores(self, driver: WebDriver) -> tuple[list[int], list[int]]:
-        home_scores_elements = driver.find_elements(By.CLASS_NAME, 'event__score--home')
-        away_scores_elements = driver.find_elements(By.CLASS_NAME, 'event__score--away')
+            away_scores = [score.text for score in away_scores_elements]
 
-        home_scores = [score.text for score in home_scores_elements]
-        away_scores = [score.text for score in away_scores_elements]
+            return away_scores
+        except NoSuchElementException:
+            return []
 
-        return home_scores, away_scores
+    def __get_league_name(self, driver: WebDriver) -> list[str]:
+        try:
+            league_name = driver.find_element(By.CLASS_NAME, 'heading__name').text
+            return league_name
+        except NoSuchElementException:
+            return []
 
-    def __scraping(self, url: str) -> dict[str, str | list[str]]:
+    def __get_seasson(self, driver: WebDriver, len_of_data: int) -> list[str]:
+        try:
+            season = [driver.find_element(By.CLASS_NAME, 'heading__info').text]
+            return season * len_of_data
+        except NoSuchElementException:
+            return []
+
+    def __scraping(self, url: str) -> dict[str, list[str]]:
         '''scrap the data'''
         driver = self.__render_pages(url)
 
-        match_schedules, league_name, season = self.__fetch_match_schedules(driver)
-        home_clubs, away_clubs = self.__fetch_home_away_clubs(driver)
-        home_scores, away_scores = self.__fetch_match_scores(driver)
+        match_schedules = self.__get_match_schedules(driver)
+        is_postponed = self.__is_postponed(driver)
+        league_name = self.__get_league_name(driver)
+        season = self.__get_seasson(driver, len(match_schedules))
+        home_clubs = self.__get_home_clubs(driver)
+        away_clubs = self.__get_away_clubs(driver)
+        home_scores = self.__get_home_scores(driver)
+        away_scores = self.__get_away_scores(driver)
 
         scraped_data = {
             'League': league_name,
             'Season': season,
             'Schedules': match_schedules,
+            'Postponed': is_postponed,
             'Home': home_clubs,
             'Away': away_clubs,
             'Home Scores': home_scores, 
@@ -107,9 +181,9 @@ class FootballScraper:
         driver.quit()
         return scraped_data
 
-    def start(self):
+    def start(self) -> list[dict[str, list[str]]]:
         '''to start scraping'''
         with ThreadPoolExecutor(max_workers=3) as executor:
-            raw_data = executor.map(self.__scraping, URLS)
+            raw_data = list(executor.map(self.__scraping, URLS))
 
         return raw_data
