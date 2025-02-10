@@ -72,7 +72,10 @@ class Preprocessing:
                 df[key] = self.__calculate_gf_ga_gd(df[key], results_df[key])
                 df[key] = self.__calculate_pts(df[key])
                 df[key].sort_values(
-                    by=["PTS", "GD", "GF"], ignore_index=True, inplace=True, ascending=False
+                    by=["PTS", "GD", "GF"],
+                    ignore_index=True,
+                    inplace=True,
+                    ascending=False,
                 )
 
         return df
