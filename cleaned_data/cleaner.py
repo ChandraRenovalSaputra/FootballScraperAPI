@@ -64,7 +64,9 @@ class Preprocessing:
             if results_df[key].empty:
                 df[key].loc[:, "MP":] = 0
             else:
-                df[key] = self.__all_teams(df[key], results_df[key], fixtures_df[key])
+                df[key] = self.__add_all_teams_and_league(
+                    df[key], results_df[key], fixtures_df[key]
+                )
                 df[key] = self.__calculate_win_draw_lose(df[key], results_df[key])
                 df[key] = self.__calculate_match_played(df[key])
                 df[key] = self.__calculate_gf_ga_gd(df[key], results_df[key])
@@ -168,7 +170,7 @@ class Preprocessing:
 
         return df
 
-    def __all_teams(
+    def __add_all_teams_and_league(
         self, df: pd.DataFrame, results_df: pd.DataFrame, fixtures_df: pd.DataFrame
     ) -> pd.DataFrame:
         all_teams = pd.concat(
@@ -176,6 +178,9 @@ class Preprocessing:
         ).unique()
 
         df.loc[:, "TEAM"] = all_teams
+
+        league = list(results_df["League"].unique())
+        df["League"] = league * len(all_teams)
         return df
 
     def __format_schedules(self, df: pd.DataFrame, is_results: bool) -> pd.DataFrame:
