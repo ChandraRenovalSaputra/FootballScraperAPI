@@ -49,7 +49,7 @@ class FootballScraper:
         return driver
 
 
-    def __get_match_schedules(self: 'FootballScraper', driver: WebDriver) -> list[str]:
+    def __get_match_schedules(self: 'FootballScraper', driver: WebDriver) -> list[str] | list:
         '''get match schedules'''
         match_schedules = []
 
@@ -69,7 +69,7 @@ class FootballScraper:
 
         return match_schedules
 
-    def __is_postponed(self, driver: WebDriver) -> list[bool]:
+    def __is_postponed(self, driver: WebDriver) -> list[bool] | list:
         postponed_statuses = []
 
         try:
@@ -89,7 +89,7 @@ class FootballScraper:
 
         return postponed_statuses
 
-    def __get_home_clubs(self, driver: WebDriver) -> list[str]:
+    def __get_home_clubs(self, driver: WebDriver) -> list[str] | list:
         '''
         fetch match results
         '''
@@ -122,7 +122,7 @@ class FootballScraper:
         return away_participants
 
 
-    def __get_home_scores(self, driver: WebDriver) -> list[int]:
+    def __get_home_scores(self, driver: WebDriver) -> list[str] | list:
         try:
             home_scores_elements = driver.find_elements(By.CLASS_NAME, 'event__score--home')
             home_scores = [score.text for score in home_scores_elements]
@@ -130,7 +130,7 @@ class FootballScraper:
         except NoSuchElementException:
             return []
 
-    def __get_away_scores(self, driver: WebDriver) -> list[str]:
+    def __get_away_scores(self, driver: WebDriver) -> list[str] | list:
         try:
             away_scores_elements = driver.find_elements(By.CLASS_NAME, 'event__score--away')
 
@@ -140,10 +140,10 @@ class FootballScraper:
         except NoSuchElementException:
             return []
 
-    def __get_league_name(self, driver: WebDriver) -> list[str]:
+    def __get_league_name(self, driver: WebDriver) -> list[str] | list:
         try:
             league_name = driver.find_element(By.CLASS_NAME, 'heading__name').text
-            return league_name
+            return [league_name]
         except NoSuchElementException:
             return []
 
