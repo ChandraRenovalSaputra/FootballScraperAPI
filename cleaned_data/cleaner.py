@@ -28,8 +28,8 @@ class Preprocessing:
         for result_data in results_data:
             result_data.pop("Postponed")
 
-            league_name = result_data["League"]
-            result_data.pop("League")
+            league_name = result_data["League"][0]
+            result_data["League"] *= len(result_data["Season"])
 
             results_df[league_name] = pd.DataFrame(result_data)
 
@@ -44,8 +44,8 @@ class Preprocessing:
             fixture_data.pop("Home Scores")
             fixture_data.pop("Away Scores")
 
-            league_name = fixture_data["League"]
-            fixture_data.pop("League")
+            league_name = fixture_data["League"][0]
+            fixture_data["League"] *= len(fixture_data["Season"])
 
             fixtures_df[league_name] = pd.DataFrame(fixture_data)
 
