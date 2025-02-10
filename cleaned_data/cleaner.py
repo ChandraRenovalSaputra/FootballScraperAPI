@@ -58,7 +58,7 @@ class Preprocessing:
 
         for key in results_df.keys():
             df[key] = pd.DataFrame(
-                columns=["TEAM", "MP", "W", "D", "L", "GF", "GA", "GD", "PTS"]
+                columns=["League", "TEAM", "MP", "W", "D", "L", "GF", "GA", "GD", "PTS"]
             )
 
             if results_df[key].empty:
