@@ -19,6 +19,8 @@ class Preprocessing:
             self.__results_df, self.__fixtures_df
         )
 
+        self.__results_df, self.__fixtures_df, self.__standings_df = self.__concate_df()
+
     def __create_results_df(self) -> dict[str, pd.DataFrame]:
         results_data = self.__raw_data[: int(len(self.__raw_data) / 2)]
         results_df = {}
@@ -73,7 +75,23 @@ class Preprocessing:
 
         return df
 
-    def __calculate_match_played(self, df: pd.DataFrame):
+    def __concate_df(self) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+        results = pd.DataFrame()
+        fixtures = pd.DataFrame()
+        standings = pd.DataFrame()
+
+        for result, fixture, standing in zip(
+            self.__results_df.values(),
+            self.__fixtures_df.values(),
+            self.__standings_df.values(),
+        ):
+            results = pd.concat([results, result], ignore_index=True)
+            fixtures = pd.concat([fixtures, fixture], ignore_index=True)
+            standings = pd.concat([standings, standing], ignore_index=True)
+
+        return results, fixtures, standings
+
+    def __calculate_match_played(self, df: pd.DataFrame) -> pd.DataFrame:
         df["MP"] = df["W"] + df["D"] + df["L"]
         return df
 
