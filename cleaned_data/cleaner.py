@@ -1,10 +1,9 @@
 '''module automate preprocessing'''
 
+from datetime import datetime
 import copy
 import pandas as pd
 import numpy as np
-from utils.utils import format_datetime
-
 class Preprocessing:
     '''automate preprocessing class'''
     def __init__(self, raw_data: list[dict[str, list[str]]]) -> None:
@@ -187,7 +186,35 @@ class Preprocessing:
         return df
 
     def __format_schedules(self, df: pd.DataFrame, is_results: bool) -> pd.DataFrame:
-        df["Schedules"] = format_datetime(df["Schedules"], is_results)
+        """to formatting Schedules"""
+        schedules = [schedule.split(" ") for schedule in df["Schedules"]]
+
+        current_date = datetime.now()
+        current_year = current_date.year
+
+        for schedule in schedules:
+            schedule[0] = schedule[0].removesuffix(".")
+
+            day, month = map(int, schedule[0].split("."))
+
+            date = datetime(current_year, month, day)
+
+            if is_results and date > current_date:
+                year = current_year - 1
+                date = datetime(year, month, day)
+                schedule[0] = date
+            else:
+                schedule[0] = date
+
+            schedule[0] = schedule[0].strftime("%d/%m/%Y")
+
+        date = [schedule[0] for schedule in schedules]
+        time = [schedule[-1] for schedule in schedules]
+
+        df.drop(columns=["Schedules"], inplace=True)
+        df["Date"] = date
+        df["Time"] = time
+
         return df
 
     def __convert_score_types(self, df: pd.DataFrame) -> pd.DataFrame:
