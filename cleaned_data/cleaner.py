@@ -5,7 +5,8 @@ import copy
 import pandas as pd
 import numpy as np
 class Preprocessing:
-    '''automate preprocessing class'''
+    """automate preprocessing class"""
+
     def __init__(self, raw_data: list[dict[str, list[str]]]) -> None:
         self.__raw_data = copy.deepcopy(raw_data)
         self.__results_df = self.__create_results_df()
@@ -25,10 +26,10 @@ class Preprocessing:
         results_df = {}
 
         for result_data in results_data:
-            result_data.pop("Postponed")
+            result_data.pop("match_status")
 
-            league_name = result_data["League"][0]
-            result_data["League"] *= len(result_data["Season"])
+            league_name = result_data["league"][0]
+            result_data["league"] *= len(result_data["season"])
 
             results_df[league_name] = pd.DataFrame(result_data)
 
@@ -40,11 +41,11 @@ class Preprocessing:
 
         for fixture_data in fixtures_data:
 
-            fixture_data.pop("Home Scores")
-            fixture_data.pop("Away Scores")
+            fixture_data.pop("home_scores")
+            fixture_data.pop("away_scores")
 
-            league_name = fixture_data["League"][0]
-            fixture_data["League"] *= len(fixture_data["Season"])
+            league_name = fixture_data["league"][0]
+            fixture_data["league"] *= len(fixture_data["season"])
 
             fixtures_df[league_name] = pd.DataFrame(fixture_data)
 
@@ -57,25 +58,20 @@ class Preprocessing:
 
         for key in results_df.keys():
             df[key] = pd.DataFrame(
-                columns=["League", "TEAM", "MP", "W", "D", "L", "GF", "GA", "GD", "PTS"]
+                columns=["league", "team", "MP", "W", "D", "L", "GF", "GA", "GD", "PTS"]
+            )
+
+            df[key] = self.__add_all_teams_and_league(
+                df[key], results_df[key], fixtures_df[key]
             )
 
             if results_df[key].empty:
                 df[key].loc[:, "MP":] = 0
             else:
-                df[key] = self.__add_all_teams_and_league(
-                    df[key], results_df[key], fixtures_df[key]
-                )
                 df[key] = self.__calculate_win_draw_lose(df[key], results_df[key])
                 df[key] = self.__calculate_match_played(df[key])
                 df[key] = self.__calculate_gf_ga_gd(df[key], results_df[key])
                 df[key] = self.__calculate_pts(df[key])
-                df[key].sort_values(
-                    by=["PTS", "GD", "GF"],
-                    ignore_index=True,
-                    inplace=True,
-                    ascending=False,
-                )
 
         return df
 
@@ -103,37 +99,37 @@ class Preprocessing:
         self, df: pd.DataFrame, result_df: pd.DataFrame
     ) -> pd.DataFrame:
         conditions = [
-            result_df["Home Scores"] > result_df["Away Scores"],
-            result_df["Home Scores"] < result_df["Away Scores"],
+            result_df["home_scores"] > result_df["away_scores"],
+            result_df["home_scores"] < result_df["away_scores"],
         ]
-        choices = [result_df["Home"], result_df["Away"]]
+        choices = [result_df["home"], result_df["away"]]
         win_counts = np.select(conditions, choices, default=None)
         win_counts = (
-            pd.Series(win_counts).value_counts().reindex(df["TEAM"], fill_value=0)
+            pd.Series(win_counts).value_counts().reindex(df["team"], fill_value=0)
         )
 
         df["W"] = win_counts.values
 
         # lose
         conditions = [
-            result_df["Home Scores"] < result_df["Away Scores"],
-            result_df["Home Scores"] > result_df["Away Scores"],
+            result_df["home_scores"] < result_df["away_scores"],
+            result_df["home_scores"] > result_df["away_scores"],
         ]
 
         lose_counts = np.select(conditions, choices, default=None)
         lose_counts = (
-            pd.Series(lose_counts).value_counts().reindex(df["TEAM"], fill_value=0)
+            pd.Series(lose_counts).value_counts().reindex(df["team"], fill_value=0)
         )
 
         df["L"] = lose_counts.values
 
         # draw
-        draw_mask = result_df["Home Scores"] == result_df["Away Scores"]
-        draw_clubs = result_df.loc[draw_mask, ["Home", "Away"]]
+        draw_mask = result_df["home_scores"] == result_df["away_scores"]
+        draw_clubs = result_df.loc[draw_mask, ["home", "away"]]
         draw_counts = pd.concat(
-            [draw_clubs["Home"], draw_clubs["Away"]], ignore_index=True
+            [draw_clubs["home"], draw_clubs["away"]], ignore_index=True
         )
-        draw_counts = draw_counts.value_counts().reindex(df["TEAM"], fill_value=0)
+        draw_counts = draw_counts.value_counts().reindex(df["team"], fill_value=0)
 
         df["D"] = draw_counts.values
         return df
@@ -145,18 +141,18 @@ class Preprocessing:
     def __calculate_gf_ga_gd(
         self, df: pd.DataFrame, results_df: pd.DataFrame
     ) -> pd.DataFrame:
-        results_df = results_df.loc[:, "Home":]
+        results_df = results_df.loc[:, "home":]
         melted = results_df.melt(
-            value_vars=["Home", "Away"],
+            value_vars=["home", "away"],
             var_name="Role",
             value_name="Team",
             ignore_index=True,
         )
 
-        melted["GF"] = results_df.melt(value_vars=["Home Scores", "Away Scores"])[
+        melted["GF"] = results_df.melt(value_vars=["home_scores", "away_scores"])[
             "value"
         ]
-        melted["GA"] = results_df.melt(value_vars=["Away Scores", "Home Scores"])[
+        melted["GA"] = results_df.melt(value_vars=["away_scores", "home_scores"])[
             "value"
         ]
         melted["GD"] = melted["GF"] - melted["GA"]
@@ -164,7 +160,7 @@ class Preprocessing:
         result = (
             melted.groupby("Team")[["GF", "GA", "GD"]]
             .sum()
-            .reindex(df["TEAM"], fill_value=0)
+            .reindex(df["team"], fill_value=0)
         )
         df["GF"] = result["GF"].values
         df["GA"] = result["GA"].values
@@ -176,18 +172,18 @@ class Preprocessing:
         self, df: pd.DataFrame, results_df: pd.DataFrame, fixtures_df: pd.DataFrame
     ) -> pd.DataFrame:
         all_teams = pd.concat(
-            [results_df.loc[:, "Home"], fixtures_df.loc[:, "Home"]], ignore_index=True
+            [results_df.loc[:, "home"], fixtures_df.loc[:, "home"]], ignore_index=True
         ).unique()
 
-        df.loc[:, "TEAM"] = all_teams
+        df.loc[:, "team"] = all_teams
 
-        league = list(results_df["League"].unique())
-        df["League"] = league * len(all_teams)
+        league = list(results_df["league"].unique())
+        df["league"] = league * len(all_teams)
         return df
 
     def __format_schedules(self, df: pd.DataFrame, is_results: bool) -> pd.DataFrame:
         """to formatting Schedules"""
-        schedules = [schedule.split(" ") for schedule in df["Schedules"]]
+        schedules = [schedule.split(" ") for schedule in df["schedules"]]
 
         current_date = datetime.now()
         current_year = current_date.year
@@ -211,21 +207,21 @@ class Preprocessing:
         date = [schedule[0] for schedule in schedules]
         time = [schedule[-1] for schedule in schedules]
 
-        df.drop(columns=["Schedules"], inplace=True)
-        df["Date"] = date
-        df["Time"] = time
+        df.drop(columns=["schedules"], inplace=True)
+        df["date"] = date
+        df["time"] = time
 
         return df
 
     def __convert_score_types(self, df: pd.DataFrame) -> pd.DataFrame:
-        if "Home Scores" in df.columns:
-            df["Home Scores"] = df["Home Scores"].apply(int)
-            df["Away Scores"] = df["Away Scores"].apply(int)
+        if "home_scores" in df.columns:
+            df["home_scores"] = df["home_scores"].apply(int)
+            df["away_scores"] = df["away_scores"].apply(int)
         return df
 
     def __format_data(self, dfs: dict[pd.DataFrame]) -> dict[str, pd.DataFrame]:
         for df in dfs.values():
-            is_results = "Postponed" not in df.columns
+            is_results = "match_status" not in df.columns
             df = self.__format_schedules(df, is_results)
             df = self.__convert_score_types(df)
 
@@ -233,15 +229,15 @@ class Preprocessing:
 
     @property
     def results(self) -> dict[str, pd.DataFrame]:
-        '''to return result df'''
+        """to return result df"""
         return self.__results_df
 
     @property
     def fixtures(self) -> dict[str, pd.DataFrame]:
-        '''return fixtures df'''
+        """return fixtures df"""
         return self.__fixtures_df
 
     @property
     def standings(self) -> dict[str, pd.DataFrame]:
-        '''return standings df'''
+        """return standings df"""
         return self.__standings_df
