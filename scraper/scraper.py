@@ -168,14 +168,14 @@ class FootballScraper:
         away_scores = self.__get_away_scores(driver)
 
         scraped_data = {
-            'League': league_name,
-            'Season': season,
-            'Schedules': match_schedules,
-            'Postponed': is_postponed,
-            'Home': home_clubs,
-            'Away': away_clubs,
-            'Home Scores': home_scores, 
-            'Away Scores': away_scores 
+            'league': league_name,
+            'season': season,
+            'schedules': match_schedules,
+            'match_status': is_postponed,
+            'home': home_clubs,
+            'away': away_clubs,
+            'home_scores': home_scores, 
+            'away_scores': away_scores 
         }
 
         driver.quit()
