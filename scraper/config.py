@@ -1,5 +1,4 @@
-'''cONFIG'''
-DATABASE_NAME = 'scraped_data.db'
+'''Config Scraper'''
 
 API_VERSION = 'api/v1'
 API_HOST = '127.0.0.1'
