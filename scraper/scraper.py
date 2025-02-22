@@ -69,25 +69,25 @@ class FootballScraper:
 
         return match_schedules
 
-    def __is_postponed(self, driver: WebDriver) -> list[bool] | list:
-        postponed_statuses = []
+    def __match_status(self, driver: WebDriver) -> list[bool] | list:
+        match_status = []
 
         try:
             match_schedules_elements = driver.find_elements(By.CLASS_NAME, 'event__time')
         except NoSuchElementException:
-            return postponed_statuses
+            return match_status
 
         for element in match_schedules_elements:
 
             try:
 
                 element.find_element(By.CLASS_NAME, 'lineThrough')
-                postponed_statuses.append(True)
+                match_status.append("postponed")
 
             except NoSuchElementException:
-                postponed_statuses.append(False)
+                match_status.append("not_postponed")
 
-        return postponed_statuses
+        return match_status
 
     def __get_home_clubs(self, driver: WebDriver) -> list[str] | list:
         '''
@@ -159,7 +159,7 @@ class FootballScraper:
         driver = self.__render_pages(url)
 
         match_schedules = self.__get_match_schedules(driver)
-        is_postponed = self.__is_postponed(driver)
+        is_postponed = self.__match_status(driver)
         league_name = self.__get_league_name(driver)
         season = self.__get_seasson(driver, len(match_schedules))
         home_clubs = self.__get_home_clubs(driver)
