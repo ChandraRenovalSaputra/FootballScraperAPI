@@ -5,7 +5,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import NoSuchElementException, TimeoutException
-from scraper.config import URLS
+from config import URLS
 
 class FootballScraper:
     '''Football Scraper'''
@@ -187,3 +187,5 @@ class FootballScraper:
             raw_data = list(executor.map(self.__scraping, URLS))
 
         return raw_data
+
+scraper = FootballScraper()
