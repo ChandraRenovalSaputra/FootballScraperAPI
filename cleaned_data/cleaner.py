@@ -1,15 +1,16 @@
 '''module automate preprocessing'''
 
 from datetime import datetime
-import copy
 import pandas as pd
 import numpy as np
+from config import URLS
 
 class Preprocessing:
     """automate preprocessing class"""
 
     def __init__(self, raw_data: list[dict[str, list[str]]]) -> None:
-        self.__raw_data = copy.deepcopy(raw_data)
+        self.__bound = int(len(URLS) / 2)
+        self.__raw_data = raw_data
         self.__results_df = self.__create_results_df()
         self.__fixtures_df = self.__create_fixtures_df()
 
@@ -23,10 +24,10 @@ class Preprocessing:
         self.__results_df, self.__fixtures_df, self.__standings_df = self.__concate_df()
 
     def __create_results_df(self) -> dict[str, pd.DataFrame]:
-        results_data = self.__raw_data[: int(len(self.__raw_data) / 2)]
         results_df = {}
 
-        for result_data in results_data:
+        for _ in range(self.__bound):
+            result_data = next(self.__raw_data)
             result_data.pop("match_status")
 
             league_name = result_data["league"][0]
@@ -37,11 +38,10 @@ class Preprocessing:
         return results_df
 
     def __create_fixtures_df(self) -> dict[str, pd.DataFrame]:
-        fixtures_data = self.__raw_data[int(len(self.__raw_data) / 2) :]
         fixtures_df = {}
 
-        for fixture_data in fixtures_data:
-
+        for _ in range(self.__bound):
+            fixture_data = next(self.__raw_data)
             fixture_data.pop("home_scores")
             fixture_data.pop("away_scores")
 
