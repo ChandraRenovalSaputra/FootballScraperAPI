@@ -1,8 +1,5 @@
-'''main app'''
-from scraper.scraper import FootballScraper
+"""start debug"""
+from app import app
 
-
-
-if __name__ == '__main__':
-    scraper = FootballScraper()
-    scraper.start()
+if __name__ == "__main__":
+    app.run()
