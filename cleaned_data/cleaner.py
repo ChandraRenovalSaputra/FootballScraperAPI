@@ -4,6 +4,7 @@ from datetime import datetime
 import copy
 import pandas as pd
 import numpy as np
+
 class Preprocessing:
     """automate preprocessing class"""
 
@@ -228,16 +229,16 @@ class Preprocessing:
         return dfs
 
     @property
-    def results(self) -> dict[str, pd.DataFrame]:
+    def results(self) -> pd.DataFrame:
         """to return result df"""
         return self.__results_df
 
     @property
-    def fixtures(self) -> dict[str, pd.DataFrame]:
+    def fixtures(self) -> pd.DataFrame:
         """return fixtures df"""
         return self.__fixtures_df
 
     @property
-    def standings(self) -> dict[str, pd.DataFrame]:
+    def standings(self) -> pd.DataFrame:
         """return standings df"""
         return self.__standings_df
