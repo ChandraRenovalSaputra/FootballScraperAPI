@@ -2,244 +2,270 @@
 import sqlite3
 from sqlite3 import Error
 import pandas as pd
+from database.model import create_all_table
 
-def insert_leagues_data(
-    cursor: sqlite3.Cursor, results: pd.DataFrame, fixtures: pd.DataFrame
-) -> dict:
-    """insert leagues data"""
+class DatabaseManager():
+    """db manager"""
 
-    leagues = pd.concat(
-        [results["league"], fixtures["league"]], ignore_index=True
-    ).unique()
+    def __init__(self):
+        create_all_table()
 
-    season = pd.concat(
-        [results["season"], fixtures["season"]], ignore_index=True
-    ).unique()
+    def __insert_leagues_data(
+        self,
+        cursor: sqlite3.Cursor,
+        results: pd.DataFrame,
+        fixtures: pd.DataFrame
+    ) -> dict:
+        """insert leagues data"""
 
-    records = []
-    for league in leagues:
+        leagues = pd.concat(
+            [results["league"], fixtures["league"]], ignore_index=True
+        ).unique()
 
-        record = (league, season.item())
+        season = pd.concat(
+            [results["season"], fixtures["season"]], ignore_index=True
+        ).unique()
 
-        records.append(record)
+        records = []
+        for league in leagues:
 
-    cursor.executemany(
-        "INSERT OR IGNORE INTO leagues (name, season) VALUES (?, ?)", records
-    )
+            record = (league, season.item())
 
-    query = f"SELECT league_id, name FROM leagues WHERE season = '{season.item()}'"
-    cursor.execute(query)
-    raw_data = cursor.fetchall()
-
-    leagues_data = {}
-    for data in raw_data:
-        league = data[1]
-        leagues_data[league] = data[0]
-
-    return leagues_data
-
-
-def insert_teams_data(
-    cursor: sqlite3.Cursor,
-    df: pd.DataFrame,
-    leagues_data: dict,
-) -> dict:
-    """insert teams data"""
-    records = []
-
-    for row in df.itertuples():
-
-        if row.league in leagues_data.keys():
-            record = (row.team, leagues_data[row.league])
             records.append(record)
 
-    cursor.executemany(
-        "INSERT OR IGNORE INTO teams (name, league_id) VALUES (?, ?)", records
-    )
+        cursor.executemany(
+            "INSERT OR IGNORE INTO leagues (name, season) VALUES (?, ?)", records
+        )
 
-    lower = next(iter(leagues_data.values()))
-    upper = leagues_data.popitem()[1]
+        query = f"SELECT league_id, name FROM leagues WHERE season = '{season.item()}'"
+        cursor.execute(query)
+        raw_data = cursor.fetchall()
 
-    query = f"SELECT team_id, name FROM teams WHERE league_id BETWEEN {lower} AND {upper}"
+        leagues_data = {}
+        for data in raw_data:
+            league = data[1]
+            leagues_data[league] = data[0]
 
-    cursor.execute(query)
-    raw_data = cursor.fetchall()
-
-    teams_data = {}
-    for data in raw_data:
-        team = data[1]
-        team_id = data[0]
-        teams_data[team] = team_id
-
-    return teams_data
+        return leagues_data
 
 
-def insert_fixtures_data(
-    cursor: sqlite3.Cursor, fixtures: pd.DataFrame, teams_data: dict
-) -> None:
-    """insert fixtures data"""
-    records = []
+    def __insert_teams_data(
+        self,
+        cursor: sqlite3.Cursor,
+        df: pd.DataFrame,
+        leagues_data: dict,
+    ) -> dict:
+        """insert teams data"""
+        records = []
 
-    for row in fixtures.itertuples():
-        if row.home in teams_data.keys() and row.away in teams_data.keys():
-            record = (
-                row.date,
-                row.time,
-                row.match_status,
-                teams_data[row.home],
-                teams_data[row.away],
-            )
-            records.append(record)
+        for row in df.itertuples():
 
-    cursor.executemany(
-        """INSERT OR IGNORE INTO fixtures (
+            if row.league in leagues_data.keys():
+                record = (row.team, leagues_data[row.league])
+                records.append(record)
+
+        cursor.executemany(
+            "INSERT OR IGNORE INTO teams (name, league_id) VALUES (?, ?)", records
+        )
+
+        lower = next(iter(leagues_data.values()))
+        upper = leagues_data.popitem()[1]
+
+        query = f"SELECT team_id, name FROM teams WHERE league_id BETWEEN {lower} AND {upper}"
+
+        cursor.execute(query)
+        raw_data = cursor.fetchall()
+
+        teams_data = {}
+        for data in raw_data:
+            team = data[1]
+            team_id = data[0]
+            teams_data[team] = team_id
+
+        return teams_data
+
+
+    def __insert_fixtures_data(
+        self,
+        cursor: sqlite3.Cursor,
+        fixtures: pd.DataFrame,
+        teams_data: dict
+    ) -> None:
+        """insert fixtures data"""
+        records = []
+
+        for row in fixtures.itertuples():
+            if row.home in teams_data.keys() and row.away in teams_data.keys():
+                record = (
+                    row.date,
+                    row.time,
+                    row.match_status,
+                    teams_data[row.home],
+                    teams_data[row.away],
+                )
+                records.append(record)
+
+        cursor.executemany(
+            """INSERT OR IGNORE INTO fixtures (
+                    date,
+                    time,
+                    match_status,
+                    home_team_id,
+                    away_team_id
+                ) VALUES (
+                    ?,
+                    ?,
+                    ?,
+                    ?,
+                    ?
+                )
+            """,
+            records
+        )
+
+    def __insert_results_data(
+        self,
+        cursor: sqlite3.Cursor,
+        results: pd.DataFrame,
+        teams_data: dict
+    ) -> None:
+        """insert results data"""
+        records = []
+
+        for row in results.itertuples():
+            if row.home in teams_data.keys() and row.away in teams_data.keys():
+                record = (
+                    row.date,
+                    row.time,
+                    teams_data[row.home],
+                    teams_data[row.away],
+                    row.home_scores,
+                    row.away_scores,
+                )
+                records.append(record)
+
+        cursor.executemany(
+            """
+            INSERT OR IGNORE INTO results (
                 date,
                 time,
-                match_status,
                 home_team_id,
-                away_team_id
+                away_team_id,
+                home_score,
+                away_score
             ) VALUES (
+                ?,
                 ?,
                 ?,
                 ?,
                 ?,
                 ?
             )
-        """,
-        records
-    )
+            """, records,
+        )
 
-def insert_results_data(
-    cursor: sqlite3.Cursor, results: pd.DataFrame, teams_data: dict
-) -> None:
-    """insert results data"""
-    records = []
+    def __insert_standings_data(
+        self,
+        cursor: sqlite3.Cursor,
+        standings: pd.DataFrame,
+        teams_data: dict
+    ) -> None:
+        """insert standings data"""
 
-    for row in results.itertuples():
-        if row.home in teams_data.keys() and row.away in teams_data.keys():
-            record = (
-                row.date,
-                row.time,
-                teams_data[row.home],
-                teams_data[row.away],
-                row.home_scores,
-                row.away_scores,
+        records = []
+        for row in standings.itertuples():
+            if row.team in teams_data.keys():
+                record = (
+                    teams_data[row.team],
+                    row.MP,
+                    row.W,
+                    row.D,
+                    row.L,
+                    row.GF,
+                    row.GA,
+                    row.GD,
+                    row.PTS,
+                )
+
+                records.append(record)
+
+        cursor.executemany(
+            """
+            INSERT OR IGNORE INTO standings (
+                team_id,
+                MP,
+                W,
+                D,
+                L,
+                GF,
+                GA,
+                GD,
+                PTS
+            ) VALUES (
+                ?,
+                ?,
+                ?,
+                ?,
+                ?,
+                ?,
+                ?,
+                ?,
+                ?
             )
-            records.append(record)
-
-    cursor.executemany(
-        """
-        INSERT OR IGNORE INTO results (
-            date,
-            time,
-            home_team_id,
-            away_team_id,
-            home_score,
-            away_score
-        ) VALUES (
-            ?,
-            ?,
-            ?,
-            ?,
-            ?,
-            ?
+            """, records,
         )
-        """, records,
-    )
 
-def insert_standings_data(
-    cursor: sqlite3.Cursor, standings: pd.DataFrame, teams_data: dict
-) -> None:
-    """insert standings data"""
+    def insert_data(
+        self,
+        db_name: str,
+        results: pd.DataFrame,
+        fixtures: pd.DataFrame,
+        standings: pd.DataFrame
+    ) -> None:
+        """insert all data"""
+        try:
+            conn = sqlite3.connect(db_name)
+            cursor = conn.cursor()
 
-    records = []
-    for row in standings.itertuples():
-        if row.team in teams_data.keys():
-            record = (
-                teams_data[row.team],
-                row.MP,
-                row.W,
-                row.D,
-                row.L,
-                row.GF,
-                row.GA,
-                row.GD,
-                row.PTS,
+            leagues_data = self.__insert_leagues_data(
+                cursor,
+                results.loc[:, ["league", "season"]],
+                fixtures.loc[:, ["league", "season"]],
             )
 
-            records.append(record)
+            teams_data = self.__insert_teams_data(
+                cursor, standings.loc[:, ["league", "team"]], leagues_data
+            )
 
-    cursor.executemany(
-        """
-        INSERT OR IGNORE INTO standings (
-            team_id,
-            MP,
-            W,
-            D,
-            L,
-            GF,
-            GA,
-            GD,
-            PTS
-        ) VALUES (
-            ?,
-            ?,
-            ?,
-            ?,
-            ?,
-            ?,
-            ?,
-            ?,
-            ?
-        )
-        """, records,
-    )
+            self.__insert_fixtures_data(
+                cursor,
+                fixtures.loc[:, ["match_status", "home", "away", "date", "time"]],
+                teams_data,
+            )
 
-def insert_data(
-    db_name: str, results: pd.DataFrame, fixtures: pd.DataFrame, standings: pd.DataFrame
-) -> None:
-    """insert all data"""
-    try:
-        conn = sqlite3.connect(db_name)
-        cursor = conn.cursor()
+            self.__insert_results_data(
+                cursor,
+                results.loc[
+                    :, ["date", "time", "home", "away", "home_scores", "away_scores"]
+                ],
+                teams_data,
+            )
 
-        leagues_data = insert_leagues_data(
-            cursor,
-            results.loc[:, ["league", "season"]],
-            fixtures.loc[:, ["league", "season"]],
-        )
+            self.__insert_standings_data(
+                cursor,
+                standings.loc[:, ["team", "MP", "W", "D", "L", "GF", "GA", "GD", "PTS"]],
+                teams_data,
+            )
 
-        teams_data = insert_teams_data(
-            cursor, standings.loc[:, ["league", "team"]], leagues_data
-        )
+            conn.commit()
 
-        insert_fixtures_data(
-            cursor,
-            fixtures.loc[:, ["match_status", "home", "away", "date", "time"]],
-            teams_data,
-        )
+        except Error as e:
+            print(f"SQLite Error occurred: {e}")
+            print(f"{db_name} rollback!")
+            conn.rollback()
 
-        insert_results_data(
-            cursor,
-            results.loc[
-                :, ["date", "time", "home", "away", "home_scores", "away_scores"]
-            ],
-            teams_data,
-        )
+        finally:
+            cursor.close()
+            conn.close()
 
-        insert_standings_data(
-            cursor,
-            standings.loc[:, ["team", "MP", "W", "D", "L", "GF", "GA", "GD", "PTS"]],
-            teams_data,
-        )
-
-        conn.commit()
-
-    except Error as e:
-        print(f"SQLite Error occurred: {e}")
-        print(f"{db_name} rollback!")
-        conn.rollback()
-
-    finally:
-        cursor.close()
-        conn.close()
+db_manager = DatabaseManager()
