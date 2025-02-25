@@ -184,7 +184,7 @@ class FootballScraper:
     def start(self) -> list[dict[str, list[str]]]:
         '''to start scraping'''
         with ThreadPoolExecutor(max_workers=3) as executor:
-            raw_data = list(executor.map(self.__scraping, URLS))
+            raw_data = executor.map(self.__scraping, URLS)
 
         return raw_data
 
