@@ -1,8 +1,13 @@
-'''Config Scraper'''
+'''Config'''
+from pathlib import Path
+from flask import Blueprint
 
-API_VERSION = 'api/v1'
-API_HOST = '127.0.0.1'
-API_PORT = 5000
+DB_NAME = 'football.db'
+FOLDER_PATH = Path('database')
+DB_PATH = FOLDER_PATH / DB_NAME
+
+
+API_BP = Blueprint("api", __name__, url_prefix="/api")
 
 URLS = [
     'https://www.flashscore.com/football/england/premier-league/results/',
