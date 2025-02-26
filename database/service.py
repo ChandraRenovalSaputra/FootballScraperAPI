@@ -217,14 +217,14 @@ class DatabaseManager():
 
     def insert_data(
         self,
-        db_name: str,
+        db: str,
         results: pd.DataFrame,
         fixtures: pd.DataFrame,
         standings: pd.DataFrame
     ) -> None:
         """insert all data"""
         try:
-            conn = sqlite3.connect(db_name)
+            conn = sqlite3.connect(db)
             cursor = conn.cursor()
 
             leagues_data = self.__insert_leagues_data(
@@ -261,9 +261,94 @@ class DatabaseManager():
 
         except Error as e:
             print(f"SQLite Error occurred: {e}")
-            print(f"{db_name} rollback!")
+            print(f"{db} rollback!")
             conn.rollback()
 
         finally:
             cursor.close()
             conn.close()
+
+    def get_teams(self, league_name: str, db: str):
+        """get teams data by league"""
+        conn = sqlite3.connect(db)
+        query = """
+            SELECT leagues.name, teams.name, teams.team_id
+            FROM teams
+            INNER JOIN leagues ON teams.league_id = leagues.league_id
+            WHERE leagues.name = ?
+        """
+        data = conn.execute(query, (league_name.replace("-", " "),)).fetchall()
+        conn.close()
+
+        return data
+
+    def get_results(self, league_name: str, db: str):
+        """get results data by league"""
+        conn = sqlite3.connect(db)
+        query = """
+            SELECT
+                results.result_id,
+                results.date, 
+                results.time, 
+                home.name,
+                away.name, 
+                results.home_score, 
+                results.away_score
+            FROM results
+            INNER JOIN teams AS home ON results.home_team_id = home.team_id
+            INNER JOIN teams AS away ON results.away_team_id = away.team_id
+            INNER JOIN leagues ON home.league_id = leagues.league_id
+            WHERE leagues.name = ?
+        """
+        data = conn.execute(query, (league_name.replace("-", " "),)).fetchall()
+        conn.close()
+
+        return data
+
+    def get_fixtures(self, league_name: str, db: str):
+        """get fixtures data by league"""
+        conn = sqlite3.connect(db)
+        query = """
+            SELECT
+                fixtures.fixture_id,
+                fixtures.date,
+                fixtures.time,
+                fixtures.match_status,
+                home.name,
+                away.name
+            FROM fixtures
+            INNER JOIN teams AS home ON fixtures.home_team_id = home.team_id
+            INNER JOIN teams AS away ON fixtures.away_team_id = away.team_id
+            INNER JOIN leagues ON home.league_id = leagues.league_id
+            WHERE leagues.name = ?
+        """
+        data = conn.execute(query, (league_name.replace("-", " "),)).fetchall()
+        conn.close()
+
+        return data
+
+    def get_standings(self, league_name: str, db: str):
+        """get standiings data by league"""
+        conn = sqlite3.connect(db)
+        query = """
+            SELECT
+                standings.standing_id,
+                teams.name,
+                standings.MP,
+                standings.W,
+                standings.D,
+                standings.L,
+                standings.GF,
+                standings.GA,
+                standings.GD,
+                standings.PTS
+            FROM standings
+            INNER JOIN teams ON standings.team_id = teams.team_id
+            INNER JOIN leagues ON teams.league_id = leagues.league_id
+            WHERE leagues.name = ?
+            ORDER BY standings.PTS DESC, standings.GD DESC, standings.GF DESC
+        """
+        data = conn.execute(query, (league_name.replace("-", " "),)).fetchall()
+        conn.close()
+
+        return data
