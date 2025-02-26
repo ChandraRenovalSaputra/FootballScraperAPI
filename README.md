@@ -26,16 +26,31 @@ A powerful API to scrape real-time football data from trusted sources. Built for
 - pip
 
 ### Installation
+1. clone this repo and go to dir:
 ```bash
 git clone https://github.com/ChandraRenovalSaputra/FootballScraperAPI.git
 cd FootballScraperAPI
+```
+
+2. Create venv:
+```bash
+python -m venv venv_name
+```
+
+3. Activate venv:
+```bash
+source venv_name/Scripts/activate
+```
+
+4. Install dependencies
+```bash
 pip install -r requirements.txt
 ```
 
 ### Running the API
-    ```bash
-    python app.py
-    ```
+```bash
+python app.py
+```
 API will be available at http://localhost:5000
 
 ### 🔍 API Endpoints 
