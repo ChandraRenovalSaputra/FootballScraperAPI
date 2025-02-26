@@ -131,7 +131,7 @@ class DatabaseManager():
     ) -> None:
         """insert results data"""
         records = []
-
+        results.sort_index(ascending=False, inplace=True)
         for row in results.itertuples():
             if row.home in teams_data.keys() and row.away in teams_data.keys():
                 record = (
@@ -267,5 +267,3 @@ class DatabaseManager():
         finally:
             cursor.close()
             conn.close()
-
-db_manager = DatabaseManager()
