@@ -52,7 +52,11 @@ def get_teams_data(league_name: str):
     """
     raw_data = conn.execute(query, (league_name.replace("-", " "),))
 
-    format_data = [{"id": data[2], "name": data[1]} for data in raw_data]
+    teams = [{"id": data[2], "name": data[1]} for data in raw_data]
+    format_data = {
+        "league": league_name,
+        "teams": teams
+    }
 
     conn.close()
     json_data = dumps(format_data, indent=2)
@@ -79,7 +83,7 @@ def get_results_data(league_name: str):
     """
     raw_data = conn.execute(query, (league_name.replace("-", " "),))
 
-    format_data = []
+    results = []
     for data in raw_data:
         record = {
             "id": data[0],
@@ -91,7 +95,12 @@ def get_results_data(league_name: str):
             "away_score": data[6]
         }
 
-        format_data.append(record)
+        results.append(record)
+
+    format_data = {
+        "league": league_name,
+        "results": results
+    }
 
     conn.close()
     json_data = dumps(format_data, indent=2)
@@ -117,7 +126,7 @@ def get_fixtures_data(league_name: str):
     """
     raw_data = conn.execute(query, (league_name.replace("-", " "),))
 
-    format_data = []
+    fixtures = []
     for data in raw_data:
         record = {
             "id": data[0],
@@ -128,7 +137,12 @@ def get_fixtures_data(league_name: str):
             "away": data[5]
         }
 
-        format_data.append(record)
+        fixtures.append(record)
+
+    format_data = {
+        "league": league_name,
+        "fixtures": fixtures
+    }
 
     conn.close()
     json_data = dumps(format_data, indent=2)
@@ -158,7 +172,7 @@ def get_standings_data(league_name: str):
     """
     raw_data = conn.execute(query, (league_name.replace("-", " "),))
 
-    format_data = []
+    standings = []
     position = 1
     for data in raw_data:
         record = {
@@ -177,7 +191,12 @@ def get_standings_data(league_name: str):
 
         position += 1
 
-        format_data.append(record)
+        standings.append(record)
+
+    format_data = {
+        "league": league_name,
+        "standings": standings
+    }
 
     conn.close()
     json_data = dumps(format_data, indent=2)
