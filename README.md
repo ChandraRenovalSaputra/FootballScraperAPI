@@ -2,7 +2,7 @@
 
 [![Python Version](https://img.shields.io/badge/python-3.8%2B-blue)](https://python.org)
 
-A powerful API to scrape real-time football data from trusted sources. Built for developers who need live match stats, fixtures, standings, and team details across top leagues.
+A powerful API to scrape football data from trusted sources. Built for developers who need live match stats, fixtures, standings, and team details across top leagues.
 
 ---
 
@@ -55,10 +55,10 @@ API will be available at http://localhost:5000 or https://chandrarenovalsaputra.
 
 ### 🔍 API Endpoints 
 
-* GET /api/(league-name)/fxtures: Upcoming matches.
-* GET /api/(league-name)/standings: League table.
-* GET /api/(league-name)/results: Match results.
-* GET /api/(league-name)/teams: Team details.
+* GET /api/league-name/fxtures: Upcoming matches.
+* GET /api/league-name/standings: League table.
+* GET /api/league-name/results: Match results.
+* GET /api/league-name/teams: Team details.
 
 ### 📬 Contact
 📧 Email: chandrarenovalsaputra03@gmail.com
