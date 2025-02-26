@@ -4,9 +4,9 @@ import sqlite3
 from json import dumps
 from flask import Flask, Response
 from selenium.common.exceptions import WebDriverException
-from scraper.scraper import scraper
+from scraper.scraper import FootballScraper
 from cleaned_data.cleaner import Preprocessing
-from database.service import db_manager
+from database.service import DatabaseManager
 from config import DB_PATH, API_BP
 
 app = Flask(__name__)
@@ -17,17 +17,17 @@ def scrape_and_save():
     """scraping and save the data"""
 
     try:
+        scraper = FootballScraper()
         raw_data = scraper.start()
-        clean_data = Preprocessing(raw_data)
-        results_data = clean_data.results
-        fixtures_data = clean_data.fixtures
-        standings_data = clean_data.standings
 
+        clean_data = Preprocessing(raw_data)
+
+        db_manager = DatabaseManager()
         db_manager.insert_data(
             DB_PATH,
-            results_data,
-            fixtures_data,
-            standings_data
+            clean_data.results,
+            clean_data.fixtures,
+            clean_data.standings
         )
 
         return dumps({"message": "Data scraped and saved successfully!"})
@@ -50,7 +50,7 @@ def get_teams_data(league_name: str):
         INNER JOIN leagues ON teams.league_id = leagues.league_id
         WHERE leagues.name = ?
     """
-    raw_data = conn.execute(query, (league_name.replace("-", " ").title(),))
+    raw_data = conn.execute(query, (league_name.replace("-", " "),))
 
     format_data = [{"id": data[2], "name": data[1]} for data in raw_data]
 
@@ -77,7 +77,7 @@ def get_results_data(league_name: str):
         INNER JOIN leagues ON home.league_id = leagues.league_id
         WHERE leagues.name = ?
     """
-    raw_data = conn.execute(query, (league_name.replace("-", " ").title(),))
+    raw_data = conn.execute(query, (league_name.replace("-", " "),))
 
     format_data = []
     for data in raw_data:
@@ -115,7 +115,7 @@ def get_fixtures_data(league_name: str):
         INNER JOIN leagues ON home.league_id = leagues.league_id
         WHERE leagues.name = ?
     """
-    raw_data = conn.execute(query, (league_name.replace("-", " ").title(),))
+    raw_data = conn.execute(query, (league_name.replace("-", " "),))
 
     format_data = []
     for data in raw_data:
@@ -156,7 +156,7 @@ def get_standings_data(league_name: str):
         WHERE leagues.name = ?
         ORDER BY standings.PTS DESC, standings.GD DESC, standings.GF DESC
     """
-    raw_data = conn.execute(query, (league_name.replace("-", " ").title(),))
+    raw_data = conn.execute(query, (league_name.replace("-", " "),))
 
     format_data = []
     position = 1
