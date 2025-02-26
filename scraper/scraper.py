@@ -102,7 +102,7 @@ class FootballScraper:
 
                 img_tag_home = home_participant.find_element(By.TAG_NAME, 'img')
 
-                home_participants.append(img_tag_home.get_attribute('alt'))
+                home_participants.append(img_tag_home.get_attribute('alt').lower())
         except NoSuchElementException:
             pass
 
@@ -115,7 +115,7 @@ class FootballScraper:
 
             for away_participant in div_away_participants:
                 img_tag_away = away_participant.find_element(By.TAG_NAME, 'img')
-                away_participants.append(img_tag_away.get_attribute('alt'))
+                away_participants.append(img_tag_away.get_attribute('alt').lower())
         except NoSuchElementException:
             pass
 
@@ -143,7 +143,7 @@ class FootballScraper:
     def __get_league_name(self, driver: WebDriver) -> list[str] | list:
         try:
             league_name = driver.find_element(By.CLASS_NAME, 'heading__name').text
-            return [league_name]
+            return [league_name.lower()]
         except NoSuchElementException:
             return []
 
@@ -181,11 +181,9 @@ class FootballScraper:
         driver.quit()
         return scraped_data
 
-    def start(self) -> list[dict[str, list[str]]]:
+    def start(self):
         '''to start scraping'''
         with ThreadPoolExecutor(max_workers=3) as executor:
             raw_data = executor.map(self.__scraping, URLS)
 
         return raw_data
-
-scraper = FootballScraper()
