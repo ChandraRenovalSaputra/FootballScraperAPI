@@ -33,17 +33,17 @@ pip install -r requirements.txt
 ```
 
 ### Running the API
-    ```
+    ```bash
     python app.py
     ```
 API will be available at http://localhost:5000
 
 ### 🔍 API Endpoints 
 
-* GET /api/<league-name>/fxtures: Upcoming matches.
-* GET /api/<league-name>/standings: League table.
-* GET /api/<league-name>/results: Match results.
-* GET /api/<league-name>/teams: Team details.
+* GET /api/(league-name)/fxtures: Upcoming matches.
+* GET /api/(league-name)/standings: League table.
+* GET /api/(league-name)/results: Match results.
+* GET /api/(league-name)/teams: Team details.
 
 ### 📬 Contact
 📧 Email: chandrarenovalsaputra03@gmail.com
