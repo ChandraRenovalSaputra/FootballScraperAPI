@@ -203,7 +203,7 @@ class Preprocessing:
             else:
                 schedule[0] = date
 
-            schedule[0] = schedule[0].strftime("%d/%m/%Y")
+            schedule[0] = schedule[0].strftime("%d-%m-%Y")
 
         date = [schedule[0] for schedule in schedules]
         time = [schedule[-1] for schedule in schedules]
