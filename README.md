@@ -51,7 +51,7 @@ pip install -r requirements.txt
 ```bash
 python app.py
 ```
-API will be available at http://localhost:5000
+API will be available at http://localhost:5000 or https://chandrarenovalsaputra.pythonanywhere.com/
 
 ### 🔍 API Endpoints 
 
